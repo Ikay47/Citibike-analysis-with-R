@@ -1,0 +1,260 @@
+---
+title: "CYCLISTIC REPORT"
+author: "UGWU IKENNA THEODORE"
+date: "2022-11-13"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+## Introduction
+
+This project is done to answer bussiness questions for cyclistic ride company.
+
+```{r}
+# Install packages
+install.packages("tidyverse")
+install.packages("readr") 
+install.packages("dplyr") 
+install.packages("ggplot2") 
+install.packages("stringr") 
+install.packages("lubridate") 
+install.packages("tidyr") 
+install.packages("tibble") 
+install.packages("skimr") 
+install.packages("janitor")
+install.packages("modeest")
+install.packages("rmutil")
+install.packages("fastmap")
+install.packages("labeling")
+
+#....load packages..... 
+library(tidyverse) 
+library(lubridate) 
+library(janitor) 
+library(readr) 
+library(ggplot2) 
+library(tibble) 
+library(dplyr)
+library(modeest)
+library(rmutil)
+library(fastmap)
+library(skimr)
+library(labeling)
+
+```
+
+## ASK
+
+The problem to be solved is, \### How do annual members and casual riders use Cyclistic bikes differently? The bussiness task is, \### Maximizing the number of annual memberships The stake holders are \### a. Cyclistic executive team \### b. Cyclistic marketing analytics team \### c. Lily Moreno
+
+Where is your data located? Index of bucket "divvy-tripdata"
+
+● How is the data organized? There were 12 datasets, each having 13 columns and several thousand rows
+
+● Are there issues with bias or credibility in this data? Does your data ROCCC? There are no issues with credibility or bias. The data is reliable, original as it can be validated by the source link, it is comprehensive as it has all the required information needed for the analysis. Also, it is current as it provides data monthly up to last month and it is cited by Motivate international inc
+
+● How are you addressing licensing, privacy, security, and accessibility? The data is private as it does not contain any personal identifiable information. It is also licensed which can be verified in this site Data License Agreement \| Divvy Bikes where details about licensing, privacy, security, and accessibility can be seen.
+
+● How did you verify the data's integrity? I verified my data by researching about the data source and divvy bike is a credible organization.
+
+● How does it help you answer your question? The data help me see the various relationships between member and casual riders. I am able to study their activities and draw conclusions based on my findings
+
+● Are there any problems with the data? There are inconsistency in some columns and some missing fields which would be handled in the process phase
+
+## PREPARE
+
+We first of all load our dataset and rename them
+
+```{r}
+tripdata_1 <- read_csv("divvy/divvy_tripdata/202110-divvy-tripdata.csv")
+tripdata_2 <- read_csv("divvy/divvy_tripdata/202111-divvy-tripdata.csv") 
+tripdata_3 <- read_csv("divvy/divvy_tripdata/202112-divvy-tripdata.csv") 
+tripdata_4 <- read_csv("divvy/divvy_tripdata/202201-divvy-tripdata.csv") 
+tripdata_5 <- read_csv("divvy/divvy_tripdata/202202-divvy-tripdata.csv") 
+tripdata_6 <- read_csv("divvy/divvy_tripdata/202203-divvy-tripdata.csv") 
+tripdata_7 <- read_csv("divvy/divvy_tripdata/202204-divvy-tripdata.csv") 
+tripdata_8 <- read_csv("divvy/divvy_tripdata/202205-divvy-tripdata.csv") 
+tripdata_9 <- read_csv("divvy/divvy_tripdata/202206-divvy-tripdata.csv") 
+tripdata_10 <- read_csv("divvy/divvy_tripdata/202207-divvy-tripdata.csv") 
+tripdata_11 <- read_csv("divvy/divvy_tripdata/202208-divvy-tripdata.csv") 
+tripdata_12 <- read_csv("divvy/divvy_tripdata/202209-divvy-publictripdata.csv")
+
+ # Using the report in the console after running this code chunk, we can see the columns are consistent having this 
+ # chr  (7): ride_id, rideable_type, start_station_name, start_station_id, end_station...
+ # dbl  (4): start_lat, start_lng, end_lat, end_lng
+ # dttm (2): started_at, ended_at
+
+```
+
+## PROCESS
+
+```{r}
+# All dataset are to be merged into a single dataset
+
+trip_year <- bind_rows(tripdata_1,tripdata_2, tripdata_3, tripdata_4, tripdata_5,  tripdata_6, tripdata_7,  tripdata_8,  tripdata_9,  tripdata_10,  tripdata_11, tripdata_12)
+
+# Removing empty cells
+trip_year <- drop_na(trip_year)
+
+#Adding columns showing date,day,month, year and ride length
+trip_year <- trip_year %>% 
+  mutate(date = as_date(started_at), day = format(as_date(started_at),"%d"), monthz = format(as_date(started_at), "%m"), year = format(as_date(started_at),"%y"),day_of_week = format(as.Date(started_at), "%A"), ride_length = difftime(ended_at, started_at))
+
+
+# data inspection
+colnames(trip_year)
+str(trip_year)
+summary(trip_year)
+```
+
+```{r}
+# Cleaning up column format to standard
+is.numeric(trip_year$ride_length)
+trip_year$ride_length <- as.numeric(as.character(trip_year$ride_length))
+is.numeric(trip_year$ride_length)
+#summary(trip_year)
+
+# Removing entries where trip_duration is negative
+
+trip_year_2 <- subset(trip_year,start_station_name !="HQ QR" & ride_length > 0)
+# Arranging and renaming day of week column
+trip_year_2$day_of_week <- factor(trip_year_2$day_of_week, levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+# Arranging column "monthz" and renaming
+#trip_year_2$monthz <- factor(trip_year_2$monthz, levels = c( "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"))
+
+trip_year_2 <- trip_year_2 %>% mutate(monthz = month.abb[as.numeric(monthz)])
+
+```
+
+##ANALYZE
+
+```{r}
+#Calculations for mean ride_length , max ride_length and mode day of the week
+
+trip_year_2 %>% group_by(member_casual) %>% 
+  summarize(mean_ride_length = mean(ride_length), max_ride_length = max(ride_length), mode_day = mfv(day_of_week) )
+```
+
+```{r}
+#Total number of rides by user
+trip_year_2 %>% group_by(member_casual) %>% 
+  summarize(number_of_trips =n(), .groups = "drop" )
+```
+
+```{r}
+# Average ride length by user
+trip_year_2 %>% group_by(member_casual) %>% 
+  summarize(mean_ride_length = mean(ride_length), .groups = "drop" )
+```
+
+```{r}
+# Average daily ride length by users
+trip_year_2 %>% group_by(member_casual,day_of_week) %>% 
+  summarize(mean_ride_length = mean(ride_length), .groups = "drop" )
+```
+
+```{r}
+# Daily number of rides by users
+trip_year_2 %>% group_by(member_casual,day_of_week) %>% 
+  summarize(number_of_trips =n(), .groups = "drop" )
+```
+
+```{r}
+
+# Number of rides by users per month
+trip_year_2 %>% group_by(member_casual,year,monthz) %>% 
+  summarize(number_of_trip =n(), .groups = "drop")
+```
+
+
+```{r}
+#Rideable type by users
+trip_year_2 %>% group_by(member_casual,rideable_type) %>% 
+  summarize(num_of_trips = n(), mean_ride_length = mean(ride_length), .groups = "drop" )
+```
+
+#SHARE 
+Here we are going to show graphs showing our findings ##BAR GRAPH SHOWING THE NUMBER OF RIDES BY USER FROM OCTOBER 2021 TO SEPTEMBER 2022
+
+```{r}
+# Pie chart to show comparison between users on number of rides
+trip_year_2 %>% group_by(member_casual) %>% 
+  summarize(number_of_trips =n(), .groups = "drop" ) %>% ggplot() + geom_col(mapping = aes(x = member_casual,y = number_of_trips, fill = member_casual, label = number_of_trips))  + labs(title = "NUMBER OF RIDES BY USERS", caption = "Data from October 2021 to September 2022")
+```
+
+## BAR GRAPH SHOWING AVERAGE RIDE LENGTH BY USER
+
+```{r}
+# Bar chart to show Average ride length by user
+trip_year_2 %>% group_by(member_casual) %>% 
+  summarize(mean_ride_length = mean(ride_length), .groups = "drop" ) %>% ggplot() + geom_col(mapping = aes(x = member_casual,y = mean_ride_length, fill = member_casual, label = mean_ride_length))  + labs(title = "MEAN RIDE LENGTH BY USERS", caption = "Data from October 2021 to September 2022")
+```
+
+# BAR GRAPH SHOWING DAILY RIDE LENGTH COMPARISON BY USER
+
+```{r}
+# Daily number of rides by users
+trip_year_2 %>% group_by(member_casual,day_of_week) %>% 
+  summarize(number_of_trips =n(), .groups = "drop" ) %>% ggplot() + geom_col(mapping = aes(x = day_of_week, y = number_of_trips, fill = day_of_week))+ facet_grid(~member_casual) +theme(axis.text.x = element_text(angle = 45)) + labs(title = "DAILY NUMBER OF RIDES BY USERS", caption = "Data from October 2021 to September 2022")
+```
+
+#BAR GRAPH SHOWING DAILY RIDE LENGTH COMPARISON BY USER
+
+```{r}
+trip_year_2 %>% group_by(member_casual,year,monthz) %>% 
+  summarize(number_of_trip =n(), .groups = "drop") %>% ggplot() + geom_col(mapping = aes(x = monthz, y = number_of_trip, fill = monthz))+ facet_wrap(~year + member_casual) +theme(axis.text.x = element_text(angle = 45)) + labs(title = "MONTHLY RIDE USAGE BY USERS", caption = "Data from October 2021 to September 2022")
+```
+
+
+#BAR GRAPH SHOWING AVERAGE DAILY RIDE LENGTH BY USERS
+
+```{r}
+# Average daily ride length by users
+trip_year_2 %>% group_by(member_casual,day_of_week) %>% 
+  summarize(mean_ride_length = mean(ride_length), .groups = "drop" )%>% ggplot() + geom_col(mapping = aes(x = day_of_week, y = mean_ride_length, fill = day_of_week))+ facet_grid(~member_casual) +theme(axis.text.x = element_text(angle = 45)) + labs(title = "DAILY AVERAGE RIDE LENGTH BY USERS", caption = "Data from October 2021 to September 2022")
+```
+
+#BARGRAPH SHOWING TYPE OF RIDE PREFERED BY USER
+
+```{r}
+trip_year_2 %>% group_by(member_casual,rideable_type) %>% 
+  summarize(num_of_trips = n(), mean_ride_length = mean(ride_length), .groups = "drop" )%>% ggplot() + geom_col(mapping = aes(x = rideable_type, y = num_of_trips, fill = rideable_type))+ facet_grid(~member_casual) + labs(title = "PREFERED RIDE TYPE BY USERS", caption = "Data from October 2021 to September 2022")
+```
+
+#BAR GRAPH SHOWING AVERAGE RIDE LENGTH FOR EACH RIDE TYPE BY USERS
+
+```{r}
+trip_year_2 %>% group_by(member_casual,rideable_type) %>% 
+  summarize(num_of_trips = n(), mean_ride_length = mean(ride_length), .groups = "drop" )%>% ggplot() + geom_col(mapping = aes(x = rideable_type, y = mean_ride_length, fill = rideable_type))+ facet_grid(~member_casual) + labs(title = "AVERAGE RIDE DURATION PER RIDE TYPE BY USERS", caption = "Data from October 2021 to September 2022")
+```
+
+
+#ACT
+#INSIGHTS AND CONCLUSIONS
+Following my analysis, this were my conclusions
+1.The casual riders have two times more average ride duration. The max ride duration is also three times more for the casual riders.
+
+2.The member riders has more number of trips however the mean ride length is longer for casual riders.
+
+3.The mean ride duration was roughly around 1200-1700 secs and it was highest from saturday to monday while casual riders had 709-843 secs as average ride duration and it peaks on weekends
+
+4.Regarding rideable type , the classic bike was preferred by both users and the docked bike was used only by the casual riders.The number of trips were higher for members.
+
+5.The busiest month for both users were from june to august
+
+
+#recommendation
+1.Promotions should be run showing that it is cheaper on the long run to be a member
+
+2.Give incentives/bonuses to riders who are members for raching a certain ride duration
+
+3.Promotions and awareness campaign should be more from may to august as this period has the highest ride activities
