@@ -2,8 +2,7 @@
 title: "CYCLISTIC REPORT"
 author: "UGWU IKENNA THEODORE"
 date: "2022-11-13"
-output:
-  html_document: default
+output: rmarkdown::github_document
 ---
 
 ```{r setup, include=FALSE}
